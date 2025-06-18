@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CVData, PersonalInfo, CustomSection, Entry, Publication, Technologies, StyleSettings } from '../types/cv';
+import { CVData, PersonalInfo, CustomSection, Entry, Publication, Technologies, StyleSettings, CustomSectionField } from '../types/cv';
 import { generateLatexCode } from '../utils/latexGenerator';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import AddSectionForm from '../components/AddSectionForm';

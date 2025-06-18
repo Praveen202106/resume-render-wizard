@@ -1,5 +1,4 @@
-
-import { CVData, Entry, Publication, CustomSection } from '../types/cv';
+import { CVData, Entry, Publication, CustomSection, Technologies } from '../types/cv';
 
 export const generateLatexCode = (data: CVData): string => {
   const {
@@ -65,22 +64,31 @@ export const generateLatexCode = (data: CVData): string => {
         \\end{samepage}`).join('\n\n');
   };
 
-  const generateTechnologies = (tech: any) => {
-    return `
-    ${tech.programmingLanguages.length > 0 ? `
+  const generateTechnologies = (tech: Technologies) => {
+    if (!tech.categories || tech.categories.length === 0) return '';
+    
+    return tech.categories.map(category => `
         \\begin{onecolentry}
-            \\textbf{Languages:} ${tech.programmingLanguages.join(', ')}
-        \\end{onecolentry}` : ''}
-    ${tech.frameworks.length > 0 ? `
-        \\vspace{0.2 cm}
+            \\textbf{${category.name}:} ${category.items.join(', ')}
+        \\end{onecolentry}`).join('\\vspace{0.2 cm}');
+  };
+
+  const generateCustomSectionFields = (fields: any[]) => {
+    return fields.map(field => `
+        \\begin{twocolentry}{
+            ${field.rightSection ? `\\textit{${field.rightSection}}` : ''}
+            ${field.rightSubSection ? `\\textit{${field.rightSubSection}}` : ''}
+        }
+            \\textbf{${field.mainHeading}}
+            ${field.subHeading ? `\\textit{${field.subHeading}}` : ''}
+        \\end{twocolentry}
+
+        ${field.bulletPoints && field.bulletPoints.length > 0 ? `\\vspace{0.10 cm}
         \\begin{onecolentry}
-            \\textbf{Technologies:} ${tech.frameworks.join(', ')}
-        \\end{onecolentry}` : ''}
-    ${tech.tools.length > 0 ? `
-        \\vspace{0.2 cm}
-        \\begin{onecolentry}
-            \\textbf{Tools:} ${tech.tools.join(', ')}
-        \\end{onecolentry}` : ''}`;
+            \\begin{highlights}
+                ${field.bulletPoints.map((point: string) => `\\item ${point}`).join('\n                ')}
+            \\end{highlights}
+        \\end{onecolentry}` : ''}`).join('\n\n        \\vspace{0.2 cm}\n\n');
   };
 
   const generateSectionContent = (section: CustomSection) => {
@@ -91,27 +99,27 @@ export const generateLatexCode = (data: CVData): string => {
         const entries = sectionEntries[section.id] || [];
         if (entries.length === 0) return '';
         return `
-    \\section{${section.title}}
+    \\section{${section.settings.title}}
     ${entries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}`;
 
       case 'publications':
         if (publications.length === 0) return '';
         return `
-    \\section{${section.title}}
+    \\section{${section.settings.title}}
     ${generatePublications(publications)}`;
 
       case 'technologies':
-        if (!technologies.programmingLanguages.length && !technologies.frameworks.length && !technologies.tools.length) return '';
+        if (!technologies.categories || technologies.categories.length === 0) return '';
         return `
-    \\section{${section.title}}
+    \\section{${section.settings.title}}
     ${generateTechnologies(technologies)}`;
 
       case 'custom':
+        const customFields = data.customSectionFields[section.id] || [];
+        if (customFields.length === 0) return '';
         return `
-    \\section{${section.title}}
-        \\begin{onecolentry}
-            Custom section content goes here.
-        \\end{onecolentry}`;
+    \\section{${section.settings.title}}
+    ${generateCustomSectionFields(customFields)}`;
 
       default:
         return '';
