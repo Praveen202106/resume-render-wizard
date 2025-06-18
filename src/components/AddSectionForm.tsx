@@ -1,96 +1,93 @@
 
 import React, { useState } from 'react';
+import { CustomSection } from '../types/cv';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Plus } from 'lucide-react';
-import { CustomSection } from '../types/cv';
 
 interface AddSectionFormProps {
   onAddSection: (section: CustomSection) => void;
 }
 
 const AddSectionForm: React.FC<AddSectionFormProps> = ({ onAddSection }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [type, setType] = useState<'entries' | 'publications' | 'technologies' | 'custom'>('entries');
+  const [sectionTitle, setSectionTitle] = useState('');
+  const [sectionType, setSectionType] = useState<'entries' | 'publications' | 'technologies' | 'custom'>('entries');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!sectionTitle.trim()) return;
 
     const newSection: CustomSection = {
       id: Date.now().toString(),
-      title: title.trim(),
-      type,
+      title: sectionTitle.trim(),
+      type: sectionType,
       settings: {
-        title: title.trim(),
+        title: sectionTitle.trim(),
         showLine: true,
-        topMargin: 0.3,
-        bottomMargin: 0.2,
+        topMargin: 0.5,
+        bottomMargin: 0.4,
         order: Date.now(),
         visible: true
       }
     };
 
     onAddSection(newSection);
-    setTitle('');
-    setType('entries');
-    setIsOpen(false);
+    setSectionTitle('');
+    setSectionType('entries');
   };
 
-  if (!isOpen) {
-    return (
-      <div className="mb-6">
-        <Button onClick={() => setIsOpen(true)} className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Section
-        </Button>
-      </div>
-    );
-  }
+  const getSectionOptions = () => [
+    { value: 'entries', label: 'Education' },
+    { value: 'entries', label: 'Experience' },
+    { value: 'entries', label: 'Projects' },
+    { value: 'entries', label: 'Skills' },
+    { value: 'technologies', label: 'Technologies' },
+    { value: 'publications', label: 'Publications' },
+    { value: 'custom', label: 'Custom Section' }
+  ];
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
-        <CardTitle>Add New Section</CardTitle>
+        <CardTitle className="flex items-center">
+          <Plus className="w-5 h-5 mr-2" />
+          Add New Section
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="section-title">Section Title</Label>
+            <Label htmlFor="sectionTitle">Section Title</Label>
             <Input
-              id="section-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Experience, Education, Projects"
+              id="sectionTitle"
+              value={sectionTitle}
+              onChange={(e) => setSectionTitle(e.target.value)}
+              placeholder="Enter section title (e.g., Education, Experience)"
               required
             />
           </div>
           
           <div>
-            <Label htmlFor="section-type">Section Type</Label>
-            <Select value={type} onValueChange={(value: any) => setType(value)}>
+            <Label htmlFor="sectionType">Section Type</Label>
+            <Select value={sectionType} onValueChange={(value: 'entries' | 'publications' | 'technologies' | 'custom') => setSectionType(value)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select section type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="entries">Standard Entries (Experience, Education, etc.)</SelectItem>
-                <SelectItem value="publications">Publications</SelectItem>
+                <SelectItem value="entries">Standard Entries (Education, Experience, Projects)</SelectItem>
                 <SelectItem value="technologies">Technologies/Skills</SelectItem>
-                <SelectItem value="custom">Custom Content</SelectItem>
+                <SelectItem value="publications">Publications</SelectItem>
+                <SelectItem value="custom">Custom Fields</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex space-x-2">
-            <Button type="submit">Add Section</Button>
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-          </div>
+          <Button type="submit" className="w-full">
+            Add Section
+          </Button>
         </form>
       </CardContent>
     </Card>

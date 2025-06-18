@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SectionSettings } from '../types/cv';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -23,7 +23,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   onUpdateSettings,
   onDelete,
   isExpanded,
-  onToggleExpand
+  onToggleExpanded
 }) => {
   const handleSettingChange = (field: keyof SectionSettings, value: any) => {
     onUpdateSettings({
@@ -59,43 +59,47 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
       
       {isExpanded && (
         <CardContent className="pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={settings.showLine}
-                onCheckedChange={(checked) => handleSettingChange('showLine', checked)}
-              />
-              <Label className="text-sm">Show Line</Label>
-            </div>
-            
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <Label className="text-sm">Top Margin</Label>
+              <Label className="text-sm">Top Spacing (cm)</Label>
               <Input
                 type="number"
                 step="0.1"
-                value={settings.topMargin}
-                onChange={(e) => handleSettingChange('topMargin', parseFloat(e.target.value) || 0)}
+                value={settings.topMargin || 0.5}
+                onChange={(e) => handleSettingChange('topMargin', parseFloat(e.target.value) || 0.5)}
                 className="h-8"
+                placeholder="0.5"
               />
             </div>
             
             <div>
-              <Label className="text-sm">Bottom Margin</Label>
+              <Label className="text-sm">Bottom Spacing (cm)</Label>
               <Input
                 type="number"
                 step="0.1"
-                value={settings.bottomMargin}
-                onChange={(e) => handleSettingChange('bottomMargin', parseFloat(e.target.value) || 0)}
+                value={settings.bottomMargin || 0.4}
+                onChange={(e) => handleSettingChange('bottomMargin', parseFloat(e.target.value) || 0.4)}
                 className="h-8"
+                placeholder="0.4"
               />
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Switch
                 checked={settings.visible}
                 onCheckedChange={(checked) => handleSettingChange('visible', checked)}
               />
               <Label className="text-sm">Visible</Label>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={settings.showLine}
+                onCheckedChange={(checked) => handleSettingChange('showLine', checked)}
+              />
+              <Label className="text-sm">Show Title Line</Label>
             </div>
           </div>
         </CardContent>

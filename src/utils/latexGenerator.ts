@@ -1,3 +1,4 @@
+
 import { CVData, Entry, Publication, CustomSection, Technologies } from '../types/cv';
 
 export const generateLatexCode = (data: CVData): string => {
@@ -28,11 +29,11 @@ export const generateLatexCode = (data: CVData): string => {
     } else {
       return `
         \\begin{twocolentry}{
-        ${entry.location ? `\\textit{${entry.location}}` : ''}    
+            ${entry.location ? `\\textit{${entry.location}}` : ''}${entry.location && entry.dateRange ? '\\\\' : ''}
             ${entry.dateRange ? `\\textit{${entry.dateRange}}` : ''}
         }
             \\textbf{${entry.leftTitle}}
-            ${entry.subtitle ? `\\textit{${entry.subtitle}}` : ''}
+            ${entry.subtitle ? `\\\\\\textit{${entry.subtitle}}` : ''}
         \\end{twocolentry}
 
         ${entry.bulletPoints.length > 0 ? `\\vspace{0.10 cm}
@@ -61,7 +62,7 @@ export const generateLatexCode = (data: CVData): string => {
             \\begin{onecolentry}
                 \\href{${pub.doiUrl}}{${pub.doiUrl}}
             \\end{onecolentry}` : ''}
-        \\end{samepage}`).join('\n\n');
+        \\end{samepage}`).join('\n\n        \\vspace{0.2 cm}\n\n');
   };
 
   const generateTechnologies = (tech: Technologies) => {
@@ -70,17 +71,17 @@ export const generateLatexCode = (data: CVData): string => {
     return tech.categories.map(category => `
         \\begin{onecolentry}
             \\textbf{${category.name}:} ${category.items.join(', ')}
-        \\end{onecolentry}`).join('\\vspace{0.2 cm}');
+        \\end{onecolentry}`).join('\n\n        \\vspace{0.2 cm}\n\n');
   };
 
   const generateCustomSectionFields = (fields: any[]) => {
     return fields.map(field => `
         \\begin{twocolentry}{
-            ${field.rightSection ? `\\textit{${field.rightSection}}` : ''}
+            ${field.rightSection ? `\\textit{${field.rightSection}}` : ''}${field.rightSection && field.rightSubSection ? '\\\\' : ''}
             ${field.rightSubSection ? `\\textit{${field.rightSubSection}}` : ''}
         }
             \\textbf{${field.mainHeading}}
-            ${field.subHeading ? `\\textit{${field.subHeading}}` : ''}
+            ${field.subHeading ? `\\\\\\textit{${field.subHeading}}` : ''}
         \\end{twocolentry}
 
         ${field.bulletPoints && field.bulletPoints.length > 0 ? `\\vspace{0.10 cm}
@@ -94,36 +95,42 @@ export const generateLatexCode = (data: CVData): string => {
   const generateSectionContent = (section: CustomSection) => {
     if (!section.settings.visible) return '';
 
+    const topMargin = section.settings.topMargin || 0.5;
+    const titleLineSpacing = 0.2;
+    const bottomMargin = section.settings.bottomMargin || 0.4;
+
+    let content = '';
+    
     switch (section.type) {
       case 'entries':
         const entries = sectionEntries[section.id] || [];
         if (entries.length === 0) return '';
-        return `
-    \\section{${section.settings.title}}
-    ${entries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}`;
+        content = entries.map(entry => generateEntry(entry)).join('\n\n        \\vspace{0.2 cm}\n\n');
+        break;
 
       case 'publications':
         if (publications.length === 0) return '';
-        return `
-    \\section{${section.settings.title}}
-    ${generatePublications(publications)}`;
+        content = generatePublications(publications);
+        break;
 
       case 'technologies':
         if (!technologies.categories || technologies.categories.length === 0) return '';
-        return `
-    \\section{${section.settings.title}}
-    ${generateTechnologies(technologies)}`;
+        content = generateTechnologies(technologies);
+        break;
 
       case 'custom':
         const customFields = data.customSectionFields[section.id] || [];
         if (customFields.length === 0) return '';
-        return `
-    \\section{${section.settings.title}}
-    ${generateCustomSectionFields(customFields)}`;
+        content = generateCustomSectionFields(customFields);
+        break;
 
       default:
         return '';
     }
+
+    return `
+    \\mysection[${section.settings.showLine}]{${section.settings.title}}{${topMargin}cm}{${titleLineSpacing}cm}{${bottomMargin}cm}
+    ${content}`;
   };
 
   // Sort sections by order
@@ -244,13 +251,24 @@ export const generateLatexCode = (data: CVData): string => {
         \\LenToUnit{\\paperwidth-2 cm-0.2 cm+0.05cm},
         \\LenToUnit{\\paperheight-1.0 cm}
     ){\\vtop{{\\null}\\makebox[0pt][c]{
-        \\small\\color{gray}\\textit{Last updated in ${personalInfo.lastUpdated ? formatDate(personalInfo.lastUpdated) : 'September 2024'}}\\hspace{\\widthof{Last updated in ${personalInfo.lastUpdated ? formatDate(personalInfo.lastUpdated) : 'September 2024'}}}
+        \\small\\color{gray}\\textit{Last updated in ${personalInfo.lastUpdated ? formatDate(personalInfo.lastUpdated) : 'September 2024'}}\\hspace{\\widthof{Last updated in ${personalInfo.lastUpdated ? formatDate(personalInfo.lastUpdatedTested) : 'September 2024'}}}
     }}}%
   }%
 }%
 
 \\let\\hrefWithoutArrow\\href
 \\renewcommand{\\href}[2]{\\hrefWithoutArrow{#1}{\\ifthenelse{\\equal{#2}}{}{#2 }\\raisebox{.15ex}{\\footnotesize \\faExternalLink*}}}
+
+\\newcommand{\\mysection}[5][true]{%
+  \\needspace{4\\baselineskip}%
+  \\vspace{#3} % top spacing
+  \\textbf{\\fontsize{14pt}{16pt}\\selectfont #2}\\par % section title with forced line break
+  \\ifthenelse{\\equal{#1}{true}}{%
+    \\vspace{#4}% spacing between title and line
+    \\noindent\\titlerule
+  }{}%
+  \\vspace{#5}% spacing after line
+}
 
 \\begin{document}
     \\newcommand{\\AND}{\\unskip
