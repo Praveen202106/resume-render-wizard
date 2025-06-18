@@ -40,10 +40,23 @@ export interface Publication {
   doiUrl: string;
 }
 
+export interface TechnologyCategory {
+  id: string;
+  name: string;
+  items: string[];
+}
+
 export interface Technologies {
-  programmingLanguages: string[];
-  frameworks: string[];
-  tools: string[];
+  categories: TechnologyCategory[];
+}
+
+export interface CustomSectionField {
+  id: string;
+  mainHeading: string;
+  rightSection: string;
+  subHeading: string;
+  rightSubSection: string;
+  bulletPoints: string[];
 }
 
 export interface StyleSettings {
@@ -75,5 +88,6 @@ export interface CVData {
   sectionEntries: {[key: string]: Entry[]};
   publications: Publication[];
   technologies: Technologies;
+  customSectionFields: {[key: string]: CustomSectionField[]};
   styleSettings: StyleSettings;
 }

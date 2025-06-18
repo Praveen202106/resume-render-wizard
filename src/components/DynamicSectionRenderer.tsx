@@ -1,21 +1,23 @@
 
-import React from 'react';
-import { CustomSection, Entry, Publication, Technologies } from '../types/cv';
+import React, { useState } from 'react';
+import { CustomSection, Entry, Publication, Technologies, CustomSectionField } from '../types/cv';
 import SectionManager from './SectionManager';
 import TechnologiesForm from './TechnologiesForm';
 import PublicationsForm from './PublicationsForm';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { X } from 'lucide-react';
+import CustomSectionForm from './CustomSectionForm';
+import SectionHeader from './SectionHeader';
 
 interface DynamicSectionRendererProps {
   section: CustomSection;
   entries: Entry[];
   publications: Publication[];
   technologies: Technologies;
+  customFields: CustomSectionField[];
   onUpdateEntries: (entries: Entry[]) => void;
   onUpdatePublications: (publications: Publication[]) => void;
   onUpdateTechnologies: (technologies: Technologies) => void;
+  onUpdateCustomFields: (fields: CustomSectionField[]) => void;
+  onUpdateSection: (section: CustomSection) => void;
   onDeleteSection: () => void;
 }
 
@@ -24,12 +26,23 @@ const DynamicSectionRenderer: React.FC<DynamicSectionRendererProps> = ({
   entries,
   publications,
   technologies,
+  customFields,
   onUpdateEntries,
   onUpdatePublications,
   onUpdateTechnologies,
+  onUpdateCustomFields,
+  onUpdateSection,
   onDeleteSection
 }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const handleSettingsUpdate = (settings: any) => {
+    onUpdateSection({ ...section, settings });
+  };
+
   const renderSectionContent = () => {
+    if (!isExpanded) return null;
+
     switch (section.type) {
       case 'entries':
         return (
@@ -59,14 +72,10 @@ const DynamicSectionRenderer: React.FC<DynamicSectionRendererProps> = ({
       
       case 'custom':
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{section.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">Custom section - Content editor coming soon</p>
-            </CardContent>
-          </Card>
+          <CustomSectionForm
+            fields={customFields}
+            onChange={onUpdateCustomFields}
+          />
         );
       
       default:
@@ -76,12 +85,14 @@ const DynamicSectionRenderer: React.FC<DynamicSectionRendererProps> = ({
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">{section.title}</h3>
-        <Button variant="destructive" size="sm" onClick={onDeleteSection}>
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
+      <SectionHeader
+        title={section.title}
+        settings={section.settings}
+        onUpdateSettings={handleSettingsUpdate}
+        onDelete={onDeleteSection}
+        isExpanded={isExpanded}
+        onToggleExpand={() => setIsExpanded(!isExpanded)}
+      />
       {renderSectionContent()}
     </div>
   );

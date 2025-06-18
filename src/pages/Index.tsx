@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CVData, PersonalInfo, CustomSection, Entry, Publication, Technologies, StyleSettings } from '../types/cv';
 import { generateLatexCode } from '../utils/latexGenerator';
@@ -27,10 +26,9 @@ const Index = () => {
     sectionEntries: {},
     publications: [],
     technologies: {
-      programmingLanguages: [],
-      frameworks: [],
-      tools: []
+      categories: []
     },
+    customSectionFields: {},
     styleSettings: {
       pageMargins: { top: 2, bottom: 2, left: 2, right: 2 },
       columnSpacing: 0,
@@ -104,10 +102,13 @@ const Index = () => {
       },
       publications: [],
       technologies: {
-        programmingLanguages: ['C++', 'C', 'Java', 'JavaScript', 'Python'],
-        frameworks: ['.NET', 'React', 'Node.js'],
-        tools: ['Git', 'Docker', 'VS Code']
+        categories: [
+          { id: '1', name: 'Programming Languages', items: ['C++', 'C', 'Java', 'JavaScript', 'Python'] },
+          { id: '2', name: 'Frameworks', items: ['.NET', 'React', 'Node.js'] },
+          { id: '3', name: 'Tools', items: ['Git', 'Docker', 'VS Code'] }
+        ]
       },
+      customSectionFields: {},
       styleSettings: {
         pageMargins: { top: 2, bottom: 2, left: 2, right: 2 },
         columnSpacing: 0,
@@ -130,7 +131,17 @@ const Index = () => {
     setCvData(prev => ({
       ...prev,
       customSections: [...prev.customSections, section],
-      sectionEntries: { ...prev.sectionEntries, [section.id]: [] }
+      sectionEntries: { ...prev.sectionEntries, [section.id]: [] },
+      customSectionFields: { ...prev.customSectionFields, [section.id]: [] }
+    }));
+  };
+
+  const updateSection = (sectionId: string, updatedSection: CustomSection) => {
+    setCvData(prev => ({
+      ...prev,
+      customSections: prev.customSections.map(s => 
+        s.id === sectionId ? updatedSection : s
+      )
     }));
   };
 
@@ -140,6 +151,9 @@ const Index = () => {
       customSections: prev.customSections.filter(s => s.id !== sectionId),
       sectionEntries: Object.fromEntries(
         Object.entries(prev.sectionEntries).filter(([key]) => key !== sectionId)
+      ),
+      customSectionFields: Object.fromEntries(
+        Object.entries(prev.customSectionFields).filter(([key]) => key !== sectionId)
       )
     }));
   };
@@ -161,6 +175,13 @@ const Index = () => {
 
   const updateStyleSettings = (styleSettings: StyleSettings) => {
     setCvData(prev => ({ ...prev, styleSettings }));
+  };
+
+  const updateCustomSectionFields = (sectionId: string, fields: CustomSectionField[]) => {
+    setCvData(prev => ({
+      ...prev,
+      customSectionFields: { ...prev.customSectionFields, [sectionId]: fields }
+    }));
   };
 
   const latexCode = generateLatexCode(cvData);
@@ -206,9 +227,12 @@ const Index = () => {
                     entries={cvData.sectionEntries[section.id] || []}
                     publications={cvData.publications}
                     technologies={cvData.technologies}
+                    customFields={cvData.customSectionFields[section.id] || []}
                     onUpdateEntries={(entries) => updateSectionEntries(section.id, entries)}
                     onUpdatePublications={updatePublications}
                     onUpdateTechnologies={updateTechnologies}
+                    onUpdateCustomFields={(fields) => updateCustomSectionFields(section.id, fields)}
+                    onUpdateSection={(updatedSection) => updateSection(section.id, updatedSection)}
                     onDeleteSection={() => deleteSection(section.id)}
                   />
                 ))}
