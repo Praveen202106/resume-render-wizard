@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { CVData, PersonalInfo, SectionSettings, Entry, Publication, Technologies, StyleSettings } from '../types/cv';
 import { generateLatexCode } from '../utils/latexGenerator';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import SectionManager from '../components/SectionManager';
 import TechnologiesForm from '../components/TechnologiesForm';
-import StyleSettings from '../components/StyleSettings';
+import StyleSettingsForm from '../components/StyleSettings';
 import LatexPreview from '../components/LatexPreview';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -186,7 +185,7 @@ const Index = () => {
                 </TabsContent>
                 
                 <TabsContent value="style">
-                  <StyleSettings
+                  <StyleSettingsForm
                     styleSettings={cvData.styleSettings}
                     onChange={updateStyleSettings}
                   />
