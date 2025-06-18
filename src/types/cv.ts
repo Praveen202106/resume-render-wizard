@@ -62,15 +62,18 @@ export interface StyleSettings {
   footerText: string;
 }
 
+export interface CustomSection {
+  id: string;
+  title: string;
+  type: 'entries' | 'publications' | 'technologies' | 'custom';
+  settings: SectionSettings;
+}
+
 export interface CVData {
   personalInfo: PersonalInfo;
-  sections: {[key: string]: SectionSettings};
-  educationEntries: Entry[];
-  experienceEntries: Entry[];
-  projectEntries: Entry[];
+  customSections: CustomSection[];
+  sectionEntries: {[key: string]: Entry[]};
   publications: Publication[];
   technologies: Technologies;
   styleSettings: StyleSettings;
-  customSections: string[];
-  sectionEntries: {[key: string]: Entry[]};
 }

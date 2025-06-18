@@ -1,18 +1,14 @@
 
-import { CVData, Entry, Publication } from '../types/cv';
+import { CVData, Entry, Publication, CustomSection } from '../types/cv';
 
 export const generateLatexCode = (data: CVData): string => {
   const {
     personalInfo,
-    sections,
-    educationEntries,
-    experienceEntries,
-    projectEntries,
+    customSections,
+    sectionEntries,
     publications,
     technologies,
-    styleSettings,
-    customSections,
-    sectionEntries
+    styleSettings
   } = data;
 
   const formatDate = (date: Date | undefined) => {
@@ -69,6 +65,62 @@ export const generateLatexCode = (data: CVData): string => {
         \\end{samepage}`).join('\n\n');
   };
 
+  const generateTechnologies = (tech: any) => {
+    return `
+    ${tech.programmingLanguages.length > 0 ? `
+        \\begin{onecolentry}
+            \\textbf{Languages:} ${tech.programmingLanguages.join(', ')}
+        \\end{onecolentry}` : ''}
+    ${tech.frameworks.length > 0 ? `
+        \\vspace{0.2 cm}
+        \\begin{onecolentry}
+            \\textbf{Technologies:} ${tech.frameworks.join(', ')}
+        \\end{onecolentry}` : ''}
+    ${tech.tools.length > 0 ? `
+        \\vspace{0.2 cm}
+        \\begin{onecolentry}
+            \\textbf{Tools:} ${tech.tools.join(', ')}
+        \\end{onecolentry}` : ''}`;
+  };
+
+  const generateSectionContent = (section: CustomSection) => {
+    if (!section.settings.visible) return '';
+
+    switch (section.type) {
+      case 'entries':
+        const entries = sectionEntries[section.id] || [];
+        if (entries.length === 0) return '';
+        return `
+    \\section{${section.title}}
+    ${entries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}`;
+
+      case 'publications':
+        if (publications.length === 0) return '';
+        return `
+    \\section{${section.title}}
+    ${generatePublications(publications)}`;
+
+      case 'technologies':
+        if (!technologies.programmingLanguages.length && !technologies.frameworks.length && !technologies.tools.length) return '';
+        return `
+    \\section{${section.title}}
+    ${generateTechnologies(technologies)}`;
+
+      case 'custom':
+        return `
+    \\section{${section.title}}
+        \\begin{onecolentry}
+            Custom section content goes here.
+        \\end{onecolentry}`;
+
+      default:
+        return '';
+    }
+  };
+
+  // Sort sections by order
+  const sortedSections = [...customSections].sort((a, b) => a.settings.order - b.settings.order);
+
   return `\\documentclass[10pt, letterpaper]{article}
 
 % Packages:
@@ -123,7 +175,7 @@ export const generateLatexCode = (data: CVData): string => {
 \\makeatletter
 \\let\\ps@customFooterStyle\\ps@plain
 \\patchcmd{\\ps@customFooterStyle}{\\thepage}{
-    \\color{gray}\\textit{\\small ${styleSettings.footerText} - Page \\thepage{} of \\pageref*{LastPage}}
+    \\color{gray}\\textit{\\small ${styleSettings.footerText || personalInfo.fullName} - Page \\thepage{} of \\pageref*{LastPage}}
 }{}{} 
 \\makeatother
 \\pagestyle{customFooterStyle}
@@ -202,84 +254,22 @@ export const generateLatexCode = (data: CVData): string => {
 
     \\placelastupdatedtext
     \\begin{header}
-        \\textbf{\\fontsize{24 pt}{24 pt}\\selectfont ${personalInfo.fullName}}
+        \\textbf{\\fontsize{24 pt}{24 pt}\\selectfont ${personalInfo.fullName || 'Your Name'}}
 
         \\vspace{0.3 cm}
 
         \\normalsize
-        \\mbox{{\\color{black}\\footnotesize\\faMapMarker*}\\hspace*{0.13cm}${personalInfo.location}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{\\hrefWithoutArrow{mailto:${personalInfo.email}}{\\color{black}{\\footnotesize\\faEnvelope[regular]}\\hspace*{0.13cm}${personalInfo.email}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{\\hrefWithoutArrow{tel:${personalInfo.phone}}{\\color{black}{\\footnotesize\\faPhone*}\\hspace*{0.13cm}${personalInfo.phone}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{\\hrefWithoutArrow{${personalInfo.website}}{\\color{black}{\\footnotesize\\faLink}\\hspace*{0.13cm}${personalInfo.website}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{\\hrefWithoutArrow{${personalInfo.linkedin}}{\\color{black}{\\footnotesize\\faLinkedinIn}\\hspace*{0.13cm}${personalInfo.linkedin}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{\\hrefWithoutArrow{${personalInfo.github}}{\\color{black}{\\footnotesize\\faGithub}\\hspace*{0.13cm}${personalInfo.github}}}%
+        ${personalInfo.location ? `\\mbox{{\\color{black}\\footnotesize\\faMapMarker*}\\hspace*{0.13cm}${personalInfo.location}}%` : ''}
+        ${personalInfo.email ? `${personalInfo.location ? '\\kern 0.25 cm%\\AND%\\kern 0.25 cm%' : ''}\\mbox{\\hrefWithoutArrow{mailto:${personalInfo.email}}{\\color{black}{\\footnotesize\\faEnvelope[regular]}\\hspace*{0.13cm}${personalInfo.email}}}%` : ''}
+        ${personalInfo.phone ? `${(personalInfo.location || personalInfo.email) ? '\\kern 0.25 cm%\\AND%\\kern 0.25 cm%' : ''}\\mbox{\\hrefWithoutArrow{tel:${personalInfo.phone}}{\\color{black}{\\footnotesize\\faPhone*}\\hspace*{0.13cm}${personalInfo.phone}}}%` : ''}
+        ${personalInfo.website ? `${(personalInfo.location || personalInfo.email || personalInfo.phone) ? '\\kern 0.25 cm%\\AND%\\kern 0.25 cm%' : ''}\\mbox{\\hrefWithoutArrow{${personalInfo.website}}{\\color{black}{\\footnotesize\\faLink}\\hspace*{0.13cm}${personalInfo.website}}}%` : ''}
+        ${personalInfo.linkedin ? `${(personalInfo.location || personalInfo.email || personalInfo.phone || personalInfo.website) ? '\\kern 0.25 cm%\\AND%\\kern 0.25 cm%' : ''}\\mbox{\\hrefWithoutArrow{${personalInfo.linkedin}}{\\color{black}{\\footnotesize\\faLinkedinIn}\\hspace*{0.13cm}${personalInfo.linkedin}}}%` : ''}
+        ${personalInfo.github ? `${(personalInfo.location || personalInfo.email || personalInfo.phone || personalInfo.website || personalInfo.linkedin) ? '\\kern 0.25 cm%\\AND%\\kern 0.25 cm%' : ''}\\mbox{\\hrefWithoutArrow{${personalInfo.github}}{\\color{black}{\\footnotesize\\faGithub}\\hspace*{0.13cm}${personalInfo.github}}}%` : ''}
     \\end{header}
 
     \\vspace{0.3 cm - 0.3 cm}
 
-${sections.education?.visible ? `
-    \\section{${sections.education.title}}
-    ${educationEntries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}
-` : ''}
-
-${sections.experience?.visible ? `
-    \\section{${sections.experience.title}}
-    ${experienceEntries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}
-` : ''}
-
-${sections.publications?.visible && publications.length > 0 ? `
-    \\section{${sections.publications.title}}
-    ${generatePublications(publications)}
-` : ''}
-
-${sections.projects?.visible ? `
-    \\section{${sections.projects.title}}
-    ${projectEntries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}
-` : ''}
-
-${sections.technologies?.visible ? `
-    \\section{${sections.technologies.title}}
-    ${technologies.programmingLanguages.length > 0 ? `
-        \\begin{onecolentry}
-            \\textbf{Languages:} ${technologies.programmingLanguages.join(', ')}
-        \\end{onecolentry}` : ''}
-    ${technologies.frameworks.length > 0 ? `
-        \\vspace{0.2 cm}
-        \\begin{onecolentry}
-            \\textbf{Technologies:} ${technologies.frameworks.join(', ')}
-        \\end{onecolentry}` : ''}
-    ${technologies.tools.length > 0 ? `
-        \\vspace{0.2 cm}
-        \\begin{onecolentry}
-            \\textbf{Tools:} ${technologies.tools.join(', ')}
-        \\end{onecolentry}` : ''}
-` : ''}
-
-${customSections.map(sectionKey => {
-  const section = sections[sectionKey];
-  const entries = sectionEntries[sectionKey] || [];
-  if (!section?.visible || entries.length === 0) return '';
-  
-  return `
-    \\section{${section.title}}
-    ${entries.map(entry => generateEntry(entry)).join('\\n\\n        \\vspace{0.2 cm}\\n\\n')}
-  `;
-}).join('')}
+${sortedSections.map(section => generateSectionContent(section)).filter(content => content.trim()).join('\n\n')}
 
 \\end{document}`;
 };

@@ -1,89 +1,35 @@
+
 import React, { useState } from 'react';
-import { CVData, PersonalInfo, SectionSettings, Entry, Publication, Technologies, StyleSettings } from '../types/cv';
+import { CVData, PersonalInfo, CustomSection, Entry, Publication, Technologies, StyleSettings } from '../types/cv';
 import { generateLatexCode } from '../utils/latexGenerator';
 import PersonalInfoForm from '../components/PersonalInfoForm';
-import SectionManager from '../components/SectionManager';
-import TechnologiesForm from '../components/TechnologiesForm';
+import AddSectionForm from '../components/AddSectionForm';
+import DynamicSectionRenderer from '../components/DynamicSectionRenderer';
 import StyleSettingsForm from '../components/StyleSettings';
 import LatexPreview from '../components/LatexPreview';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Button } from '../components/ui/button';
 
 const Index = () => {
   const [cvData, setCvData] = useState<CVData>({
     personalInfo: {
-      fullName: 'John Doe',
-      location: 'Your Location',
-      email: 'youremail@yourdomain.com',
-      phone: '+1-234-567-8900',
-      website: 'https://yourwebsite.com',
-      linkedin: 'https://linkedin.com/in/yourusername',
-      github: 'https://github.com/yourusername',
+      fullName: '',
+      location: '',
+      email: '',
+      phone: '',
+      website: '',
+      linkedin: '',
+      github: '',
       lastUpdated: new Date()
     },
-    sections: {
-      education: { title: 'Education', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 1, visible: true },
-      experience: { title: 'Experience', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 2, visible: true },
-      publications: { title: 'Publications', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 3, visible: true },
-      projects: { title: 'Projects', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 4, visible: true },
-      technologies: { title: 'Technologies', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 5, visible: true }
-    },
-    educationEntries: [
-      {
-        id: '1',
-        leftTitle: 'University of Pennsylvania',
-        subtitle: 'BS in Computer Science',
-        rightSideValue: '',
-        isOneColumn: false,
-        bulletPoints: ['GPA: 3.9/4.0', 'Coursework: Computer Architecture, Algorithms, Computational Theory'],
-        location: '',
-        dateRange: 'Sept 2000 – May 2005'
-      }
-    ],
-    experienceEntries: [
-      {
-        id: '1',
-        leftTitle: 'Software Engineer',
-        subtitle: 'Apple',
-        rightSideValue: '',
-        isOneColumn: false,
-        bulletPoints: [
-          'Reduced time to render user buddy lists by 75% by implementing prediction algorithm',
-          'Integrated iChat with Spotlight Search by creating metadata extraction tool',
-          'Redesigned chat file format and implemented backward compatibility'
-        ],
-        location: 'Cupertino, CA',
-        dateRange: 'June 2005 – Aug 2007'
-      }
-    ],
-    projectEntries: [
-      {
-        id: '1',
-        leftTitle: 'Multi-User Drawing Tool',
-        subtitle: '',
-        rightSideValue: 'github.com/name/repo',
-        isOneColumn: false,
-        bulletPoints: [
-          'Developed electronic classroom for simultaneous drawing with synchronized edits',
-          'Tools Used: C++, MFC'
-        ],
-        projectLink: 'https://github.com/name/repo',
-        toolsUsed: 'C++, MFC'
-      }
-    ],
-    publications: [
-      {
-        id: '1',
-        title: '3D Finite Element Analysis of No-Insulation Coils',
-        authors: 'Frodo Baggins, John Doe, Samwise Gamgee',
-        date: new Date('2004-01-01'),
-        doiUrl: 'https://doi.org/10.1109/TASC.2023.3340648'
-      }
-    ],
+    customSections: [],
+    sectionEntries: {},
+    publications: [],
     technologies: {
-      programmingLanguages: ['C++', 'C', 'Java', 'JavaScript', 'Python'],
-      frameworks: ['.NET', 'React', 'Node.js'],
-      tools: ['Git', 'Docker', 'VS Code']
+      programmingLanguages: [],
+      frameworks: [],
+      tools: []
     },
     styleSettings: {
       pageMargins: { top: 2, bottom: 2, left: 2, right: 2 },
@@ -93,26 +39,120 @@ const Index = () => {
       fontSize: '10pt',
       themeColor: '#004F90',
       showPageNumber: true,
-      footerText: 'John Doe'
-    },
-    customSections: [],
-    sectionEntries: {}
+      footerText: ''
+    }
   });
+
+  const [useTemplate, setUseTemplate] = useState(false);
+
+  const loadTemplate = () => {
+    setCvData({
+      personalInfo: {
+        fullName: 'John Doe',
+        location: 'Your Location',
+        email: 'youremail@yourdomain.com',
+        phone: '+1-234-567-8900',
+        website: 'https://yourwebsite.com',
+        linkedin: 'https://linkedin.com/in/yourusername',
+        github: 'https://github.com/yourusername',
+        lastUpdated: new Date()
+      },
+      customSections: [
+        {
+          id: '1',
+          title: 'Education',
+          type: 'entries',
+          settings: { title: 'Education', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 1, visible: true }
+        },
+        {
+          id: '2',
+          title: 'Experience',
+          type: 'entries',
+          settings: { title: 'Experience', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 2, visible: true }
+        },
+        {
+          id: '3',
+          title: 'Technologies',
+          type: 'technologies',
+          settings: { title: 'Technologies', showLine: true, topMargin: 0.3, bottomMargin: 0.2, order: 3, visible: true }
+        }
+      ],
+      sectionEntries: {
+        '1': [{
+          id: '1',
+          leftTitle: 'University of Pennsylvania',
+          subtitle: 'BS in Computer Science',
+          rightSideValue: '',
+          isOneColumn: false,
+          bulletPoints: ['GPA: 3.9/4.0', 'Coursework: Computer Architecture, Algorithms, Computational Theory'],
+          location: '',
+          dateRange: 'Sept 2000 – May 2005'
+        }],
+        '2': [{
+          id: '1',
+          leftTitle: 'Software Engineer',
+          subtitle: 'Apple',
+          rightSideValue: '',
+          isOneColumn: false,
+          bulletPoints: [
+            'Reduced time to render user buddy lists by 75% by implementing prediction algorithm',
+            'Integrated iChat with Spotlight Search by creating metadata extraction tool'
+          ],
+          location: 'Cupertino, CA',
+          dateRange: 'June 2005 – Aug 2007'
+        }]
+      },
+      publications: [],
+      technologies: {
+        programmingLanguages: ['C++', 'C', 'Java', 'JavaScript', 'Python'],
+        frameworks: ['.NET', 'React', 'Node.js'],
+        tools: ['Git', 'Docker', 'VS Code']
+      },
+      styleSettings: {
+        pageMargins: { top: 2, bottom: 2, left: 2, right: 2 },
+        columnSpacing: 0,
+        bulletLeftMargin: 0.4,
+        sectionTitleLine: true,
+        fontSize: '10pt',
+        themeColor: '#004F90',
+        showPageNumber: true,
+        footerText: 'John Doe'
+      }
+    });
+    setUseTemplate(true);
+  };
 
   const updatePersonalInfo = (personalInfo: PersonalInfo) => {
     setCvData(prev => ({ ...prev, personalInfo }));
   };
 
-  const updateEducationEntries = (educationEntries: Entry[]) => {
-    setCvData(prev => ({ ...prev, educationEntries }));
+  const addSection = (section: CustomSection) => {
+    setCvData(prev => ({
+      ...prev,
+      customSections: [...prev.customSections, section],
+      sectionEntries: { ...prev.sectionEntries, [section.id]: [] }
+    }));
   };
 
-  const updateExperienceEntries = (experienceEntries: Entry[]) => {
-    setCvData(prev => ({ ...prev, experienceEntries }));
+  const deleteSection = (sectionId: string) => {
+    setCvData(prev => ({
+      ...prev,
+      customSections: prev.customSections.filter(s => s.id !== sectionId),
+      sectionEntries: Object.fromEntries(
+        Object.entries(prev.sectionEntries).filter(([key]) => key !== sectionId)
+      )
+    }));
   };
 
-  const updateProjectEntries = (projectEntries: Entry[]) => {
-    setCvData(prev => ({ ...prev, projectEntries }));
+  const updateSectionEntries = (sectionId: string, entries: Entry[]) => {
+    setCvData(prev => ({
+      ...prev,
+      sectionEntries: { ...prev.sectionEntries, [sectionId]: entries }
+    }));
+  };
+
+  const updatePublications = (publications: Publication[]) => {
+    setCvData(prev => ({ ...prev, publications }));
   };
 
   const updateTechnologies = (technologies: Technologies) => {
@@ -131,66 +171,57 @@ const Index = () => {
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">LaTeX CV Editor</h1>
           <p className="text-gray-600">Create and customize your professional CV with real-time LaTeX preview</p>
+          
+          {!useTemplate && cvData.customSections.length === 0 && (
+            <div className="mt-4">
+              <Button onClick={loadTemplate} variant="outline">
+                Load Sample Template
+              </Button>
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-160px)]">
           {/* Form Editor - Left Side */}
           <div className="bg-white rounded-lg shadow-sm border">
             <ScrollArea className="h-full p-6">
-              <Tabs defaultValue="personal" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 mb-6">
-                  <TabsTrigger value="personal">Personal</TabsTrigger>
-                  <TabsTrigger value="experience">Experience</TabsTrigger>
-                  <TabsTrigger value="education">Education</TabsTrigger>
-                  <TabsTrigger value="projects">Projects</TabsTrigger>
-                  <TabsTrigger value="style">Style</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="personal" className="space-y-4">
+              <div className="space-y-6">
+                {/* Personal Information */}
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
                   <PersonalInfoForm
                     personalInfo={cvData.personalInfo}
                     onChange={updatePersonalInfo}
                   />
-                  <TechnologiesForm
+                </div>
+
+                {/* Add Section Button */}
+                <AddSectionForm onAddSection={addSection} />
+
+                {/* Dynamic Sections */}
+                {cvData.customSections.map((section) => (
+                  <DynamicSectionRenderer
+                    key={section.id}
+                    section={section}
+                    entries={cvData.sectionEntries[section.id] || []}
+                    publications={cvData.publications}
                     technologies={cvData.technologies}
-                    onChange={updateTechnologies}
+                    onUpdateEntries={(entries) => updateSectionEntries(section.id, entries)}
+                    onUpdatePublications={updatePublications}
+                    onUpdateTechnologies={updateTechnologies}
+                    onDeleteSection={() => deleteSection(section.id)}
                   />
-                </TabsContent>
-                
-                <TabsContent value="experience">
-                  <SectionManager
-                    title="Experience"
-                    entries={cvData.experienceEntries}
-                    onChange={updateExperienceEntries}
-                    entryType="experience"
-                  />
-                </TabsContent>
-                
-                <TabsContent value="education">
-                  <SectionManager
-                    title="Education"
-                    entries={cvData.educationEntries}
-                    onChange={updateEducationEntries}
-                    entryType="education"
-                  />
-                </TabsContent>
-                
-                <TabsContent value="projects">
-                  <SectionManager
-                    title="Projects"
-                    entries={cvData.projectEntries}
-                    onChange={updateProjectEntries}
-                    entryType="project"
-                  />
-                </TabsContent>
-                
-                <TabsContent value="style">
+                ))}
+
+                {/* Style Settings */}
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Style Settings</h2>
                   <StyleSettingsForm
                     styleSettings={cvData.styleSettings}
                     onChange={updateStyleSettings}
                   />
-                </TabsContent>
-              </Tabs>
+                </div>
+              </div>
             </ScrollArea>
           </div>
 
